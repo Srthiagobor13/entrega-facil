@@ -6,7 +6,7 @@ Projeto PIT: app com 3 perfis (cliente, restaurante, entregador), desenvolvido c
 | Camada | Tecnologia |
 |---|---|
 | Front-end | HTML, CSS e JavaScript puro, PWA (manifest + service worker) |
-| Back-end | Node.js + Express (API REST, JWT, bcrypt) |
+| Back-end | Node.js + Express, padrão MVC (API REST, JWT, bcrypt) |
 | Banco | SQLite (`node:sqlite`, nativo do Node) |
 | Testes | `node:test` |
 | Hospedagem | Render (`render.yaml`) |
@@ -17,7 +17,7 @@ Requer Node 22.5 ou superior.
 cd backend
 npm install
 npm start      # http://localhost:3000
-npm test       # 10 testes automatizados da API
+npm test       # 23 testes automatizados
 ```
 
 ## Contas de demonstração (senha `123456`)
@@ -27,7 +27,7 @@ npm test       # 10 testes automatizados da API
 Cliente navega no cardápio sem login, personaliza os itens (carne, adicionais, retiradas, ponto), monta a sacola e só entra na conta ao finalizar (`recebido`). O restaurante aceita (`preparando`) e marca `pronto`. O entregador aceita (`a_caminho`) e confirma (`entregue`). A tela se atualiza a cada 5 s.
 
 ## Documentação
-Veja `docs/DOCUMENTACAO.md`.
+Veja `docs/README.md` (organizada por situação: planejamento, codificação e testes).
 
 ## Limitações conhecidas
 - Pagamento é simulado.
