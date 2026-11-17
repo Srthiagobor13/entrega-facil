@@ -1,4 +1,4 @@
-const VERSAO = 'entregafacil-v3';
+const VERSAO = 'entregafacil-v4';
 const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/manifest.webmanifest', '/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/img/hero.jpg', '/offline.html'];
 
 self.addEventListener('install', (e) => {
@@ -20,8 +20,7 @@ self.addEventListener('fetch', (e) => {
   if (url.pathname.startsWith('/img/') || url.pathname.startsWith('/icons/')) {
     e.respondWith(
       caches.match(req).then((hit) => hit || fetch(req).then((r) => {
-        const copia = r.clone();
-        caches.open(VERSAO).then((c) => c.put(req, copia));
+        if (r.ok) { const copia = r.clone(); caches.open(VERSAO).then((c) => c.put(req, copia)); }
         return r;
       })),
     );
@@ -32,8 +31,7 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(req)
       .then((r) => {
-        const copia = r.clone();
-        caches.open(VERSAO).then((c) => c.put(req, copia));
+        if (r.ok) { const copia = r.clone(); caches.open(VERSAO).then((c) => c.put(req, copia)); }
         return r;
       })
       .catch(() => caches.match(req).then((hit) => hit || (req.mode === 'navigate' ? caches.match('/offline.html') : undefined))),

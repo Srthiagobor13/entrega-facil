@@ -66,6 +66,10 @@ docs/                   documentação por situação
 - SQL sempre parametrizado, sem concatenar entrada do usuário.
 - Texto do usuário é escapado no front-end contra XSS.
 - Autorização por perfil e por dono do recurso (ex.: restaurante só mexe nos pedidos da própria casa).
+- Limite de 10 tentativas falhas de login ou cadastro a cada 15 min por IP (`express-rate-limit`).
+- Cabeçalhos de segurança e política de conteúdo (CSP) com `helmet`.
+- Campos de texto validados por tipo e tamanho. E-mail normalizado em minúsculas.
+- Em produção o app não inicia sem `JWT_SECRET`.
 - Aceite de entrega atômico (`UPDATE ... WHERE status = 'pronto'`), então dois entregadores não pegam o mesmo pedido.
 
 ## API
@@ -77,13 +81,15 @@ docs/                   documentação por situação
 | POST | `/api/pedidos` | Cliente |
 | GET | `/api/pedidos` | Autenticado (filtrado por perfil) |
 | PATCH | `/api/pedidos/:id/status` | Autenticado (transições validadas por perfil) |
+| GET e PATCH | `/api/me` | Autenticado (ver e editar nome, trocar senha com a senha atual) |
 | GET | `/api/saude` | Público |
 
 ## Testes automatizados
-Rodar: `cd backend && npm test` (23 testes).
+Rodar: `cd backend && npm test` (33 testes).
 
 | Arquivo | O que cobre |
 |---|---|
 | `test/api.test.js` | Fluxo completo pedido, preparo e entrega. Permissões. Personalização. Pedido mínimo. CRUD de produto |
 | `test/precificacao.test.js` | Testes unitários do cálculo de preço, limites e arredondamento |
+| `test/correcoes.test.js` | Regressão dos bugs achados no QA: e-mail inválido ou duplicado, troco, tipos inesperados, produto inválido, disputa de entrega (409), troca de senha, cabeçalhos de segurança e limite de tentativas de login |
 | `test/erros-e-pwa.test.js` | JSON inválido, 404, token inválido, validação de cadastro, e arquivos do PWA (manifest, ícones, service worker) |

@@ -51,7 +51,7 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .btn[disabled] { opacity: .45; cursor: not-allowed; }
 
 /* ---------- Hero (cartaz) ---------- */
-.hero { position: relative; min-height: 94svh; display: flex; align-items: flex-end; padding: 120px clamp(16px, 4vw, 40px) 90px; background: linear-gradient(180deg, rgba(15,14,13,.5) 0%, rgba(15,14,13,.2) 38%, rgba(15,14,13,.82) 82%, var(--bg) 100%), linear-gradient(90deg, rgba(15,14,13,.78) 0%, rgba(15,14,13,.1) 65%), var(--img) center / cover no-repeat; }
+.hero { position: relative; min-height: 94svh; display: flex; align-items: flex-end; padding: calc(var(--topo-h, 58px) + 60px) clamp(16px, 4vw, 40px) 90px; background: linear-gradient(180deg, rgba(15,14,13,.5) 0%, rgba(15,14,13,.2) 38%, rgba(15,14,13,.82) 82%, var(--bg) 100%), linear-gradient(90deg, rgba(15,14,13,.78) 0%, rgba(15,14,13,.1) 65%), var(--img) center / cover no-repeat; }
 .hero-in { max-width: 1160px; width: 100%; margin: 0 auto; }
 .eyebrow { text-transform: uppercase; letter-spacing: .28em; font-size: .75rem; color: var(--ouro); font-weight: 600; margin-bottom: 18px; display: flex; align-items: center; gap: 14px; }
 .eyebrow::before { content: ""; width: 40px; height: 1px; background: var(--ouro); }
@@ -75,11 +75,11 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 
 /* ---------- Cardápio ---------- */
 .cardapio { max-width: 1160px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 80px; }
-.cats { position: sticky; top: 58px; z-index: 20; display: flex; gap: 8px; overflow-x: auto; padding: 14px 0; margin-top: 26px; background: linear-gradient(180deg, var(--bg) 70%, rgba(15,14,13,0)); scrollbar-width: none; }
+.cats { position: sticky; top: calc(var(--topo-h, 58px) - 1px); z-index: 20; display: flex; gap: 8px; overflow-x: auto; padding: 14px 0; margin-top: 26px; background: linear-gradient(180deg, var(--bg) 70%, rgba(15,14,13,0)); scrollbar-width: none; }
 .cats::-webkit-scrollbar { display: none; }
 .cats button { flex: none; background: var(--s1); border: 1px solid var(--line); color: var(--mudo); border-radius: 99px; padding: 8px 18px; font-size: .88rem; font-weight: 500; cursor: pointer; }
 .cats button.at { background: var(--ouro); border-color: var(--ouro); color: #1a1408; font-weight: 700; }
-.secao { padding-top: 34px; scroll-margin-top: 120px; }
+.secao { padding-top: 34px; scroll-margin-top: calc(var(--topo-h, 58px) + 62px); }
 .secao h2 { font-family: var(--display); font-weight: 400; font-size: clamp(2rem, 5vw, 2.8rem); letter-spacing: .04em; display: flex; align-items: center; gap: 18px; margin-bottom: 20px; }
 .secao h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .destaques { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
@@ -108,7 +108,7 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .painel.gaveta { max-width: 460px; }
 .p-corpo { overflow-y: auto; flex: 1; overscroll-behavior: contain; }
 .p-rodape { padding: 14px 20px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--s1); }
-.fechar { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,.2); background: rgba(15,14,13,.75); color: var(--txt); cursor: pointer; display: grid; place-items: center; z-index: 3; }
+.fechar { position: absolute; top: 12px; right: 12px; width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255,255,255,.2); background: rgba(15,14,13,.75); color: var(--txt); cursor: pointer; display: grid; place-items: center; z-index: 3; }
 .p-foto { aspect-ratio: 16 / 9; background-size: cover; background-position: center; }
 .p-cab { padding: 20px 22px 6px; }
 .p-cab.sem-foto { padding-top: 26px; padding-right: 60px; }
@@ -123,14 +123,14 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .linha-op .sub { color: var(--mudo); font-size: .78rem; }
 .sel-btn { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); color: var(--txt); text-align: left; cursor: pointer; padding: 12px 0; display: flex; align-items: center; gap: 12px; font-size: .95rem; }
 .sel-btn:last-child { border-bottom: 0; }
-.sel-btn .marca-op { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #5c5348; flex: none; display: grid; place-items: center; }
+.sel-btn .marca-op { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #8a7f73; flex: none; display: grid; place-items: center; }
 .sel-btn.rem .marca-op { border-radius: 6px; }
 .sel-btn.on .marca-op { border-color: var(--ouro); background: var(--ouro); }
 .sel-btn.on .marca-op::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #1a1408; }
 .sel-btn.rem.on .marca-op::after { width: 9px; height: 5px; border-radius: 0; background: none; border-left: 2px solid #1a1408; border-bottom: 2px solid #1a1408; transform: rotate(-45deg) translate(1px, -1px); }
 .sel-btn .extra-preco { margin-left: auto; color: var(--mudo); font-size: .85rem; }
 .step { display: inline-flex; align-items: center; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 99px; padding: 3px; }
-.step button { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--s2); color: var(--txt); font-size: 1.15rem; cursor: pointer; line-height: 1; display: grid; place-items: center; }
+.step button { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--s2); color: var(--txt); font-size: 1.15rem; cursor: pointer; line-height: 1; display: grid; place-items: center; }
 .step button:hover:not([disabled]) { background: var(--ouro); color: #1a1408; }
 .step button[disabled] { opacity: .35; cursor: not-allowed; }
 .step output { min-width: 28px; text-align: center; font-weight: 700; }
@@ -150,7 +150,7 @@ label { display: block; font-size: .78rem; text-transform: uppercase; letter-spa
 .linha-sac ul { list-style: none; padding: 0; margin: 4px 0 0; color: var(--mudo); font-size: .8rem; }
 .linha-sac .obs { color: var(--ouro); font-size: .78rem; margin-top: 4px; }
 .linha-sac .dir { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-.link-rm { background: none; border: 0; color: var(--mudo); font-size: .78rem; text-decoration: underline; cursor: pointer; padding: 0; }
+.link-rm { background: none; border: 0; color: var(--mudo); font-size: .85rem; text-decoration: underline; cursor: pointer; padding: 10px 4px; }
 .resumo { padding: 16px 22px 4px; }
 .resumo .l { display: flex; justify-content: space-between; color: var(--mudo); font-size: .92rem; padding: 3px 0; }
 .resumo .l.tot { color: var(--txt); font-weight: 700; font-size: 1.1rem; padding-top: 10px; margin-top: 6px; border-top: 1px solid var(--line); }
@@ -168,7 +168,7 @@ label { display: block; font-size: .78rem; text-transform: uppercase; letter-spa
 .demo { margin-top: 18px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 10px; color: var(--mudo); font-size: .78rem; }
 
 /* ---------- Páginas internas ---------- */
-.pagina { max-width: 860px; margin: 0 auto; padding: 110px clamp(16px, 4vw, 40px) 80px; min-height: 80svh; }
+.pagina { max-width: 860px; margin: 0 auto; padding: calc(var(--topo-h, 58px) + 40px) clamp(16px, 4vw, 40px) 80px; min-height: 80svh; }
 .pagina > h1 { font-family: var(--display); font-weight: 400; font-size: clamp(2.6rem, 8vw, 4rem); letter-spacing: .04em; margin-bottom: 4px; line-height: 1; }
 .pagina > .sub { color: var(--mudo); margin-bottom: 28px; }
 .cartao { background: var(--s1); border: 1px solid var(--line); border-radius: var(--raio); padding: 18px 20px; margin-bottom: 14px; }
@@ -189,8 +189,8 @@ label { display: block; font-size: .78rem; text-transform: uppercase; letter-spa
 .etq.entregue { background: #12291c; color: var(--ok); }
 .etq.cancelado { background: #301915; color: var(--perigo); }
 .linha-tempo { display: flex; margin: 18px 0 4px; }
-.linha-tempo li { list-style: none; flex: 1; text-align: center; font-size: .7rem; color: #6d645b; position: relative; padding-top: 22px; text-transform: uppercase; letter-spacing: .06em; }
-.linha-tempo li::before { content: ""; position: absolute; top: 5px; left: 50%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--s2); border: 2px solid #4a4137; z-index: 1; }
+.linha-tempo li { list-style: none; flex: 1; text-align: center; font-size: .7rem; color: #8f8478; position: relative; padding-top: 22px; text-transform: uppercase; letter-spacing: .06em; }
+.linha-tempo li::before { content: ""; position: absolute; top: 5px; left: 50%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--s2); border: 2px solid #8a7f73; z-index: 1; }
 .linha-tempo li::after { content: ""; position: absolute; top: 10px; left: -50%; width: 100%; height: 2px; background: #3a342d; }
 .linha-tempo li:first-child::after { display: none; }
 .linha-tempo li.feito { color: var(--txt); }
@@ -218,9 +218,20 @@ label { display: block; font-size: .78rem; text-transform: uppercase; letter-spa
 }
 @keyframes entra { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (max-width: 560px) {
-  .nav .lnk.oculta-m { display: none; }
-  .logo { font-size: 1.4rem; }
+  /* Celular: o topo quebra em duas linhas em vez de estourar a tela; nada fica escondido fora da borda */
+  #topo { flex-wrap: wrap; gap: 4px 12px; padding: 10px 16px; }
+  .nav { display: contents; }
+  .logo { order: 1; flex: 1 1 auto; white-space: nowrap; font-size: 1.3rem; text-align: left; }
+  .btn-sacola { order: 2; margin-left: auto; }
+  .nav .lnk, .nome-user { order: 3; }
+  .oculta-m { display: none !important; }
+  .nav .lnk { padding: 10px 8px; min-height: 40px; }
   .item .mini { width: 92px; height: 92px; }
-  .linha-tempo li { font-size: .62rem; }
+  .linha-tempo li { font-size: .64rem; }
 }
+.carregando { min-height: 80svh; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px; color: var(--mudo); }
+.carregando p { color: var(--txt); font-size: 1.05rem; }
+.giro { width: 38px; height: 38px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--ouro); animation: gira 0.9s linear infinite; }
+@keyframes gira { to { transform: rotate(360deg); } }
+.nota { color: var(--mudo); font-size: .8rem; margin-top: 10px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

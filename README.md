@@ -19,7 +19,7 @@ Requer Node 22.13 ou superior.
 cd backend
 npm install
 npm start      # http://localhost:3000
-npm test       # 23 testes automatizados
+npm test       # 33 testes automatizados
 ```
 
 ## Contas de demonstração (senha `123456`)

@@ -27,6 +27,6 @@ export const criarProdutoModel = (db) => {
     },
 
     desativar: (id, restauranteId) =>
-      db.prepare('UPDATE produtos SET ativo = 0 WHERE id = ? AND restaurante_id = ?').run(id, restauranteId).changes > 0,
+      db.prepare('UPDATE produtos SET ativo = 0 WHERE id = ? AND restaurante_id = ? AND ativo = 1').run(id, restauranteId).changes > 0,
   };
 };

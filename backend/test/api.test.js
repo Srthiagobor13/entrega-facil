@@ -138,7 +138,7 @@ test('personalização inválida é rejeitada', async () => {
   const c = (await call('GET', `/api/restaurantes/${rs.id}/produtos`)).data.find((p) => p.nome === 'Clássico da Casa');
   const carne = c.opcoes.find((o) => o.nome === 'Carne artesanal 150 g');
   const pedir = (selecao) => call('POST', '/api/pedidos', {
-    restaurante_id: rs.id, endereco: 'x', itens: [{ produto_id: c.id, quantidade: 1, selecao }],
+    restaurante_id: rs.id, endereco: 'Rua Teste, 100', itens: [{ produto_id: c.id, quantidade: 1, selecao }],
   }, cli);
   assert.equal((await pedir({ [carne.id]: 0 })).status, 400);   // abaixo do mínimo
   assert.equal((await pedir({ [carne.id]: 9 })).status, 400);   // acima do máximo
@@ -151,7 +151,7 @@ test('pedido abaixo do mínimo é rejeitado', async () => {
   const cli = await login('cliente@demo.com');
   const rs = (await call('GET', '/api/restaurantes')).data.find((r) => r.nome === 'Burger House');
   const refri = (await call('GET', `/api/restaurantes/${rs.id}/produtos`)).data.find((p) => p.nome.startsWith('Refrigerante'));
-  const r = await call('POST', '/api/pedidos', { restaurante_id: rs.id, endereco: 'x', itens: [{ produto_id: refri.id, quantidade: 1 }] }, cli);
+  const r = await call('POST', '/api/pedidos', { restaurante_id: rs.id, endereco: 'Rua Teste, 100', itens: [{ produto_id: refri.id, quantidade: 1 }] }, cli);
   assert.equal(r.status, 400);
   assert.match(r.data.erro, /mínimo/);
 });

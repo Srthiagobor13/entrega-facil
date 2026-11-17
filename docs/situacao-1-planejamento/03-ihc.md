@@ -58,6 +58,7 @@ flowchart LR
 | Checkout | Endereço, forma de pagamento (Pix, cartão, dinheiro com troco), resumo | Cliente |
 | Meus pedidos | Cartão por pedido, linha do tempo, itens e personalizações, ação "Cancelar" | Cliente |
 | Pedidos recebidos | Cartão por pedido com botões "Aceitar", "Recusar" e "Marcar como pronto" | Restaurante |
+| Minha conta | Editar nome e trocar senha (senha atual, nova e confirmação) | Todos os perfis logados |
 | Meu cardápio | Formulário de produto e lista com "Remover" | Restaurante |
 | Entregas | Pedidos prontos, "Aceitar entrega" e "Confirmar entrega" | Entregador |
 
@@ -73,7 +74,10 @@ flowchart LR
 | Sessão vencida | "Sessão expirada. Entre novamente." |
 | Pedido já aceito por outro entregador | "Pedido já foi aceito por outro entregador" |
 | Transição não permitida | "Transição inválida: pronto -> entregue" |
-| Sem internet | Página "Sem conexão" com botão "Tentar novamente" |
+| Sem internet | "Sem conexão com o servidor. Verifique sua internet e tente novamente." e página "Sem conexão" com botão "Tentar novamente" |
+| Servidor acordando | Tela "Carregando o cardápio..." com aviso de que a primeira visita pode levar até 1 minuto |
+| Pedido já aceito, cancelamento | "O cancelamento só é possível enquanto o pedido está Recebido" |
+| Muitas tentativas de login | "Muitas tentativas. Aguarde alguns minutos e tente de novo." |
 | Ação concluída | "Pedido #N enviado ao restaurante", "Status atualizado", "Produto adicionado" |
 
 ## 6. Protótipo

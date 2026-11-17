@@ -6,6 +6,15 @@
 const ler = (k, padrao) => { try { return JSON.parse(localStorage.getItem(k)) ?? padrao; } catch { return padrao; } };
 const gravar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignora */ } };
 
+// Carrinho guardado no navegador: se estiver corrompido ou em formato antigo, volta a vazio
+function carrinhoSalvo() {
+  const c = ler('cart_v2', null);
+  const itemOk = (i) => i && typeof i.produto_id === 'number' && typeof i.unit === 'number' && Number.isInteger(i.qtd) && i.qtd > 0
+    && i.selecao && typeof i.selecao === 'object' && Array.isArray(i.det);
+  const ok = c && Array.isArray(c.itens) && c.itens.every(itemOk) && (c.rid === null || typeof c.rid === 'number');
+  return ok ? c : { rid: null, itens: [] };
+}
+
 const S = {
   token: ler('token', null),
   user: ler('user', null),
@@ -13,7 +22,8 @@ const S = {
   rests: [],
   rest: null,          // restaurante aberto
   produtos: [],
-  cart: ler('cart_v2', { rid: null, itens: [] }),
+  cart: carrinhoSalvo(),
+  ultimo: null,
   m: null,             // estado do modal de produto
   overlay: null,       // 'produto' | 'sacola' | 'checkout' | 'auth'
   authModo: 'entrar',
@@ -31,7 +41,7 @@ const PAGAMENTOS = { pix: 'Pix', cartao: 'Cartão na entrega', dinheiro: 'Dinhei
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const brl = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const hora = (s) => new Date(s.replace(' ', 'T') + 'Z').toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+const hora = (s) => !s ? '' : new Date(s.replace(' ', 'T') + 'Z').toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 const foto = (src) => (src ? `style="background-image:url('${esc(src)}')"` : '');
 
 const ICONES = {
@@ -44,19 +54,31 @@ function aviso(msg, erro = false) {
   const el = $('#aviso');
   el.textContent = msg;
   el.className = 'vis' + (erro ? ' erro' : '');
+  el.setAttribute('role', erro ? 'alert' : 'status');
   clearTimeout(aviso.t);
   aviso.t = setTimeout(() => (el.className = ''), 3200);
 }
 
 async function api(caminho, metodo = 'GET', corpo) {
-  const r = await fetch('/api' + caminho, {
-    method: metodo,
-    headers: { 'Content-Type': 'application/json', ...(S.token ? { Authorization: 'Bearer ' + S.token } : {}) },
-    body: corpo ? JSON.stringify(corpo) : undefined,
-  });
+  // Limite de 70 s: o plano gratuito da hospedagem pode levar cerca de 1 minuto para acordar
+  const ctl = new AbortController();
+  const limite = setTimeout(() => ctl.abort(), 70000);
+  let r;
+  try {
+    r = await fetch('/api' + caminho, {
+      method: metodo,
+      headers: { 'Content-Type': 'application/json', ...(S.token ? { Authorization: 'Bearer ' + S.token } : {}) },
+      body: corpo ? JSON.stringify(corpo) : undefined,
+      signal: ctl.signal,
+    });
+  } catch (e) {
+    throw new Error(e.name === 'AbortError'
+      ? 'O servidor demorou para responder. Tente novamente em instantes.'
+      : 'Sem conexão com o servidor. Verifique sua internet e tente novamente.');
+  } finally { clearTimeout(limite); }
   const dados = await r.json().catch(() => ({}));
   if (r.status === 401 && S.token && !caminho.startsWith('/auth')) { sair(true); throw new Error('Sessão expirada. Entre novamente.'); }
-  if (!r.ok) throw new Error(dados.erro || 'Erro na requisição');
+  if (!r.ok) throw new Error(dados.erro || 'Não foi possível concluir a ação. Tente novamente.');
   return dados;
 }
 
@@ -154,9 +176,9 @@ function sair(silencioso = false) {
 function renderTopo() {
   const u = S.user;
   const papel = u?.papel;
-  const links = papel === 'restaurante' ? [['painel', 'Pedidos'], ['cardapio', 'Meu cardápio']]
-    : papel === 'entregador' ? [['entregas', 'Entregas']]
-    : [['home', 'Cardápio'], ...(papel === 'cliente' ? [['pedidos', 'Meus pedidos']] : [])];
+  const links = papel === 'restaurante' ? [['painel', 'Pedidos'], ['cardapio', 'Meu cardápio'], ['conta', 'Conta']]
+    : papel === 'entregador' ? [['entregas', 'Entregas'], ['conta', 'Conta']]
+    : [['home', 'Cardápio'], ...(papel === 'cliente' ? [['pedidos', 'Meus pedidos'], ['conta', 'Conta']] : [])];
   const mostraSacola = !papel || papel === 'cliente';
   $('#topo').innerHTML = `
     <button class="logo" data-a="ir" data-v="${papel === 'restaurante' ? 'painel' : papel === 'entregador' ? 'entregas' : 'home'}" aria-label="Entrega Fácil, início">ENTREGA <b>FÁCIL</b></button>
@@ -167,7 +189,14 @@ function renderTopo() {
       ${mostraSacola ? `<button class="btn-sacola" data-a="abrir-sacola" aria-label="Abrir sacola">${icone('sacola')}<span class="oculta-m">Sacola</span><span class="qt">${qtdCart()}</span></button>` : ''}
     </nav>`;
   atualizaSolido();
+  medeTopo();
 }
+
+// Guarda a altura real do topo (no celular ele pode ocupar duas linhas) para o resto do layout
+function medeTopo() {
+  document.documentElement.style.setProperty('--topo-h', $('#topo').offsetHeight + 'px');
+}
+window.addEventListener('resize', medeTopo);
 
 function atualizaSolido() {
   $('#topo').classList.toggle('solido', S.view !== 'home' || window.scrollY > 40);
@@ -183,6 +212,9 @@ async function carregarRests() {
 }
 
 async function renderHome() {
+  if (!document.querySelector('.hero')) {
+    $('#app').innerHTML = '<div class="carregando" role="status"><div class="giro"></div><p>Carregando o cardápio...</p><small>Na primeira visita o servidor pode levar até 1 minuto para acordar.</small></div>';
+  }
   try {
     await carregarRests();
     S.produtos = await api(`/restaurantes/${S.rest.id}/produtos`);
@@ -259,12 +291,14 @@ function observarSecoes() {
 // ====================================================================
 // Overlay (modal / gaveta)
 // ====================================================================
-function abrirOverlay(html, { lado = false, gaveta = false } = {}) {
+function abrirOverlay(html, { lado = false, gaveta = false, rotulo = 'Janela' } = {}) {
   const ov = $('#overlay');
+  S.focoAnterior = document.activeElement;
   ov.className = lado ? 'lado' : '';
   ov.hidden = false;
-  ov.innerHTML = `<div class="fundo" data-a="fechar-ov"></div><div class="painel ${gaveta ? 'gaveta' : ''}" role="dialog" aria-modal="true">${html}</div>`;
+  ov.innerHTML = `<div class="fundo" data-a="fechar-ov"></div><div class="painel ${gaveta ? 'gaveta' : ''}" role="dialog" aria-modal="true" aria-label="${esc(rotulo)}" tabindex="-1">${html}</div>`;
   document.body.classList.add('trava');
+  $('#overlay .painel').focus(); // leva o foco para dentro da janela
 }
 function trocarOverlay(html) {
   const p = $('#overlay .painel');
@@ -279,8 +313,20 @@ function fecharOverlay() {
   ov.hidden = true; ov.innerHTML = '';
   document.body.classList.remove('trava');
   S.overlay = null; S.m = null;
+  if (S.focoAnterior && document.contains(S.focoAnterior)) S.focoAnterior.focus(); // devolve o foco a quem abriu
+  S.focoAnterior = null;
 }
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.overlay) fecharOverlay(); });
+document.addEventListener('keydown', (e) => {
+  if (!S.overlay) return;
+  if (e.key === 'Escape') return fecharOverlay();
+  if (e.key !== 'Tab') return;
+  // mantém o Tab dentro da janela aberta
+  const itens = [...document.querySelectorAll('#overlay .painel button:not([disabled]), #overlay .painel input, #overlay .painel textarea, #overlay .painel select, #overlay .painel a[href]')];
+  if (!itens.length) return;
+  const primeiro = itens[0]; const ultimo = itens[itens.length - 1];
+  if (e.shiftKey && (document.activeElement === primeiro || document.activeElement.classList.contains('painel'))) { e.preventDefault(); ultimo.focus(); }
+  else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
+});
 
 const btnFechar = `<button class="fechar" data-a="fechar-ov" aria-label="Fechar">${icone('fechar')}</button>`;
 
@@ -290,7 +336,7 @@ function abrirProduto(id) {
   if (!p) return;
   S.m = { p, sel: selecaoInicial(p), qtd: 1, obs: '' };
   S.overlay = 'produto';
-  abrirOverlay(htmlProduto());
+  abrirOverlay(htmlProduto(), { rotulo: 'Personalizar item' });
 }
 
 function htmlProduto() {
@@ -335,7 +381,7 @@ const refazProduto = () => trocarOverlay(htmlProduto());
 // ---------- Sacola ----------
 function abrirSacola() {
   S.overlay = 'sacola';
-  abrirOverlay(htmlSacola(), { lado: true, gaveta: true });
+  abrirOverlay(htmlSacola(), { lado: true, gaveta: true, rotulo: 'Sacola' });
 }
 
 function resumoValores() {
@@ -382,7 +428,7 @@ function abrirCheckout() {
   if (!S.user) { S.depoisLogin = 'checkout'; return abrirAuth('Entre ou crie uma conta para finalizar o pedido.'); }
   if (S.user.papel !== 'cliente') return aviso('Entre com uma conta de cliente para fazer pedidos', true);
   S.overlay = 'checkout';
-  abrirOverlay(htmlCheckout(), { lado: true, gaveta: true });
+  abrirOverlay(htmlCheckout(), { lado: true, gaveta: true, rotulo: 'Finalizar pedido' });
 }
 
 function htmlCheckout() {
@@ -431,7 +477,7 @@ async function confirmarPedido() {
 // ---------- Login / cadastro ----------
 function abrirAuth(msg = '') {
   S.overlay = 'auth';
-  abrirOverlay(htmlAuth(msg));
+  abrirOverlay(htmlAuth(msg), { rotulo: S.authModo === 'cadastro' ? 'Criar conta' : 'Entrar' });
 }
 
 function htmlAuth(msg = '') {
@@ -498,7 +544,15 @@ function cartaoPedido(p, papel) {
       <span>${brl(i.preco * i.quantidade)}</span></li>`).join('')}</ul>
     <div class="tot-ped"><span class="meta">Entregar em: ${esc(p.endereco)}<br>Pagamento: ${PAGAMENTOS[p.pagamento] || p.pagamento}${p.troco_para ? ` (troco para ${brl(p.troco_para)})` : ''}</span>
       <span class="meta" style="text-align:right">Taxa ${brl(p.taxa)}<br><strong class="preco" style="font-size:1.15rem">${brl(p.total)}</strong></span></div>
-    <div class="acoes">${acoesPedido(p, papel)}</div></article>`;
+    <div class="acoes">${acoesPedido(p, papel)}</div>${notaCancelamento(p, papel)}</article>`;
+}
+
+// Explica ao cliente quando o cancelamento é possível
+function notaCancelamento(p, papel) {
+  if (papel !== 'cliente') return '';
+  if (p.status === 'recebido') return '<p class="nota">Você pode cancelar enquanto o restaurante não aceitar o pedido.</p>';
+  if (['preparando', 'pronto', 'a_caminho'].includes(p.status)) return '<p class="nota">O cancelamento só é possível enquanto o pedido está "Recebido". Como o restaurante já aceitou, fale com ele para qualquer alteração.</p>';
+  return '';
 }
 
 async function renderPedidos() {
@@ -513,6 +567,9 @@ async function renderPedidos() {
   try {
     const lista = await api('/pedidos');
     if (!['pedidos', 'painel', 'entregas'].includes(S.view)) return;
+    const assinatura = S.view + JSON.stringify(lista);
+    if (assinatura === S.ultimo) return; // nada mudou: não refaz a tela (preserva o foco do teclado)
+    S.ultimo = assinatura;
     $('#app').innerHTML = `<section class="pagina"><h1>${t}</h1><p class="sub">${sub}</p>
       ${lista.map((p) => cartaoPedido(p, papel)).join('') || `<div class="vazio"><h3>Nada por aqui ainda</h3><p>${papel === 'cliente' ? 'Faça seu primeiro pedido no cardápio.' : 'Novos pedidos aparecem automaticamente.'}</p>${papel === 'cliente' ? '<button class="btn pri" style="margin-top:16px" data-a="ir" data-v="home">Ver cardápio</button>' : ''}</div>`}
     </section>`;
@@ -541,14 +598,59 @@ async function renderCardapioGestao() {
   } catch (e) { aviso(e.message, true); }
 }
 
+function rolarPara(id) {
+  const reduz = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById(id)?.scrollIntoView({ behavior: reduz ? 'auto' : 'smooth', block: 'start' });
+}
+
+// ---------- Minha conta: editar nome e trocar senha ----------
+async function renderConta() {
+  try {
+    const u = await api('/me');
+    if (S.view !== 'conta') return;
+    $('#app').innerHTML = `<section class="pagina"><h1>Minha conta</h1><p class="sub">Atualize seu nome ou troque a senha.</p>
+      <form class="cartao" id="f-nome">
+        <h3>Dados pessoais</h3>
+        <label for="cn">Nome</label><input id="cn" required minlength="2" maxlength="80" value="${esc(u.nome)}" autocomplete="name">
+        <label for="ce">E-mail</label><input id="ce" value="${esc(u.email)}" disabled>
+        <button class="btn pri bloco" style="margin-top:20px" type="submit">Salvar nome</button>
+      </form>
+      <form class="cartao" id="f-senha">
+        <h3>Trocar senha</h3>
+        <label for="sa">Senha atual</label><input id="sa" type="password" required autocomplete="current-password">
+        <label for="sn">Nova senha (mínimo 6 caracteres)</label><input id="sn" type="password" required minlength="6" maxlength="72" autocomplete="new-password">
+        <label for="sc">Repita a nova senha</label><input id="sc" type="password" required minlength="6" maxlength="72" autocomplete="new-password">
+        <button class="btn pri bloco" style="margin-top:20px" type="submit">Trocar senha</button>
+      </form></section>`;
+    const aplicar = (dados) => {
+      S.token = dados.token; S.user = { ...S.user, ...dados.usuario };
+      gravar('token', S.token); gravar('user', S.user); renderTopo();
+    };
+    $('#f-nome').onsubmit = async (e) => {
+      e.preventDefault();
+      try { aplicar(await api('/me', 'PATCH', { nome: $('#cn').value.trim() })); aviso('Nome atualizado'); } catch (err) { aviso(err.message, true); }
+    };
+    $('#f-senha').onsubmit = async (e) => {
+      e.preventDefault();
+      if ($('#sn').value !== $('#sc').value) return aviso('As senhas novas não são iguais', true);
+      try {
+        aplicar(await api('/me', 'PATCH', { senha_atual: $('#sa').value, nova_senha: $('#sn').value }));
+        e.target.reset(); aviso('Senha alterada com sucesso');
+      } catch (err) { aviso(err.message, true); }
+    };
+  } catch (e) { aviso(e.message, true); }
+}
+
 // ====================================================================
 // Roteamento
 // ====================================================================
 function renderConteudo() {
   clearInterval(timer);
+  S.ultimo = null;
   window.scrollTo(0, 0);
   if (S.view === 'home') return renderHome();
   if (S.view === 'cardapio') return renderCardapioGestao();
+  if (S.view === 'conta') return renderConta();
   renderPedidos();
   timer = setInterval(() => { if (!S.overlay && document.visibilityState === 'visible') renderPedidos(); }, 5000);
 }
@@ -573,7 +675,7 @@ document.addEventListener('click', async (e) => {
       case 'troca-auth': S.authModo = S.authModo === 'entrar' ? 'cadastro' : 'entrar'; return trocarOverlay(htmlAuth(d.msg));
       case 'abrir-sacola': return abrirSacola();
       case 'fechar-ov': return fecharOverlay();
-      case 'rolar': { e.preventDefault(); document.getElementById(d.alvo)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      case 'rolar': { e.preventDefault(); rolarPara(d.alvo); return; }
       case 'casa': { S.rest = S.rests.find((r) => r.id === Number(d.id)); await renderHome(); document.getElementById('cardapio')?.scrollIntoView({ block: 'start' }); return; }
       case 'prod': return abrirProduto(d.id);
       // modal de produto

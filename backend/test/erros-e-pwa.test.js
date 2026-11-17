@@ -22,9 +22,9 @@ test('JSON malformado retorna 400 com mensagem (sem derrubar o servidor)', async
   assert.equal((await fetch(base + '/api/saude')).status, 200);
 });
 
-test('corpo vazio no login retorna 401, não 500', async () => {
+test('corpo vazio no login retorna 400 com mensagem, não 500', async () => {
   const r = await post('/api/auth/login', '{}');
-  assert.equal(r.status, 401);
+  assert.equal(r.status, 400);
 });
 
 test('rota inexistente da API retorna 404 em JSON', async () => {
@@ -45,10 +45,9 @@ test('cadastro valida campos obrigatórios, senha curta e papel inválido', asyn
   assert.equal((await post('/api/auth/register', JSON.stringify({ nome: 'R', email: 'r@r.com', senha: '123456', papel: 'restaurante' }))).status, 400);
 });
 
-test('produtos de restaurante inexistente retorna lista vazia', async () => {
+test('produtos de restaurante inexistente retorna 404', async () => {
   const r = await fetch(base + '/api/restaurantes/9999/produtos');
-  assert.equal(r.status, 200);
-  assert.deepEqual(await r.json(), []);
+  assert.equal(r.status, 404);
 });
 
 test('PWA: manifest, service worker, ícones PNG e página offline são servidos', async () => {

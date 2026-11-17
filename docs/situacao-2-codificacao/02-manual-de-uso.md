@@ -41,7 +41,10 @@ O ícone "EF" aparece na tela inicial e o app abre em tela cheia.
 4. Toque em "Adicionar". O botão mostra o total do item.
 5. Abra a **Sacola**, confira e toque em "Finalizar pedido". Se ainda não entrou, o app pede login ou cadastro e continua de onde parou.
 6. Informe o endereço, escolha o pagamento (Pix, cartão ou dinheiro com troco) e confirme.
-7. Em **Meus pedidos**, acompanhe a linha do tempo. Enquanto estiver "Recebido", dá para cancelar.
+7. Em **Meus pedidos**, acompanhe a linha do tempo. Enquanto estiver "Recebido", dá para cancelar. Depois que o restaurante aceita, o app avisa que o cancelamento não é mais possível.
+
+### Minha conta (todos os perfis)
+No menu, toque em **Conta** para editar o nome ou trocar a senha (informe a senha atual e a nova duas vezes).
 
 ### Restaurante
 1. Entre com a conta do restaurante.
