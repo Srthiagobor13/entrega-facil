@@ -1,7 +1,7 @@
 # Manual de uso e instalação
 
 ## 1. Instalar e rodar
-Requisito: Node.js 22.5 ou superior.
+Requisito: Node.js 22.13 ou superior.
 
 ```bash
 git clone https://github.com/Srthiagobor13/entrega-facil.git

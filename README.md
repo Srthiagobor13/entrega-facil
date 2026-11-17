@@ -1,5 +1,7 @@
 # EntregaFácil — app de entrega de comida (PWA)
 
+**Solução no ar:** https://entrega-facil-utpk.onrender.com (plano gratuito: o primeiro acesso pode levar cerca de 50 s)
+
 Projeto PIT: app com 3 perfis (cliente, restaurante, entregador), desenvolvido com Scrum.
 
 ## Stack
@@ -12,7 +14,7 @@ Projeto PIT: app com 3 perfis (cliente, restaurante, entregador), desenvolvido c
 | Hospedagem | Render (`render.yaml`) |
 
 ## Rodar localmente
-Requer Node 22.5 ou superior.
+Requer Node 22.13 ou superior.
 ```bash
 cd backend
 npm install

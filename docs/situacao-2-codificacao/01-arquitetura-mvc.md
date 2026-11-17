@@ -3,7 +3,7 @@
 ## Stack
 | Item | Escolha |
 |---|---|
-| Linguagem do back-end | JavaScript (Node.js 22.5 ou superior) |
+| Linguagem do back-end | JavaScript (Node.js 22.13 ou superior) |
 | Framework web | Express 4 |
 | Banco de dados | SQLite (`node:sqlite`). Script PostgreSQL em `../situacao-1-planejamento/schema.sql` |
 | Autenticação | JWT (`jsonwebtoken`) e senhas com `bcryptjs` |

@@ -2,7 +2,7 @@
 
 Envie este formulário junto com o link do app para cada testador. Peça uma cópia preenchida por pessoa. Também pode ser recriado no Google Forms com os mesmos campos.
 
-Link da solução: _(preencher após o deploy)_
+Link da solução: https://entrega-facil-utpk.onrender.com
 
 ## Roteiro sugerido (cerca de 10 minutos)
 1. Abra o link no celular ou no computador. Veja se a página inicial carrega.
