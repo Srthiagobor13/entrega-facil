@@ -54,7 +54,8 @@ test('fluxo completo: pedido -> preparo -> entrega', async () => {
     itens: [{ produto_id: prods[0].id, quantidade: 2 }],
   }, cli);
   assert.equal(p.status, 201);
-  assert.equal(p.data.total, Math.round(prods[0].preco * 2 * 100) / 100);
+  assert.equal(p.data.subtotal, Math.round(prods[0].preco * 2 * 100) / 100);
+  assert.equal(p.data.total, Math.round((prods[0].preco * 2 + rs.taxa_entrega) * 100) / 100);
 
   // entregador não pode aceitar antes de ficar pronto
   assert.equal((await call('PATCH', `/api/pedidos/${p.data.id}/status`, { status: 'a_caminho' }, ent)).status, 403);
@@ -99,4 +100,58 @@ test('restaurante cria e remove produto', async () => {
   assert.equal((await call('DELETE', `/api/produtos/${novo.data.id}`, null, rest)).status, 200);
   const cli = await login('cliente@demo.com');
   assert.equal((await call('POST', '/api/produtos', { nome: 'x', preco: 1 }, cli)).status, 403);
+});
+
+test('personalização: carne extra, adicional, escolha paga e remoção', async () => {
+  const cli = await login('cliente@demo.com');
+  const rs = (await call('GET', '/api/restaurantes')).data.find((r) => r.nome === 'Burger House');
+  const classico = (await call('GET', `/api/restaurantes/${rs.id}/produtos`)).data.find((p) => p.nome === 'Clássico da Casa');
+  const op = (nome) => classico.opcoes.find((o) => o.nome === nome);
+
+  // 3 carnes (+2 x 9), 2 bacon (+12), pão australiano (+2), sem cebola
+  const selecao = {
+    [op('Carne artesanal 150 g').id]: 3,
+    [op('Bacon crocante').id]: 2,
+    [op('Australiano').id]: 1,
+    [op('Cebola').id]: 1,
+  };
+  const esperado = classico.preco + 18 + 12 + 2;
+  const r = await call('POST', '/api/pedidos', {
+    restaurante_id: rs.id, endereco: 'Rua C, 9', pagamento: 'dinheiro', troco_para: 200,
+    itens: [{ produto_id: classico.id, quantidade: 1, selecao, observacao: 'Sem guardanapo' }],
+  }, cli);
+  assert.equal(r.status, 201);
+  assert.equal(r.data.subtotal, Math.round(esperado * 100) / 100);
+
+  const pedido = (await call('GET', '/api/pedidos', null, cli)).data.find((x) => x.id === r.data.id);
+  const det = pedido.itens[0].detalhes;
+  assert.ok(det.includes('Carne artesanal 150 g: 3'));
+  assert.ok(det.includes('2x Bacon crocante'));
+  assert.ok(det.includes('Sem cebola'));
+  assert.ok(det.includes('Pão: Australiano'));
+  assert.equal(pedido.itens[0].observacao, 'Sem guardanapo');
+});
+
+test('personalização inválida é rejeitada', async () => {
+  const cli = await login('cliente@demo.com');
+  const rs = (await call('GET', '/api/restaurantes')).data.find((r) => r.nome === 'Burger House');
+  const c = (await call('GET', `/api/restaurantes/${rs.id}/produtos`)).data.find((p) => p.nome === 'Clássico da Casa');
+  const carne = c.opcoes.find((o) => o.nome === 'Carne artesanal 150 g');
+  const pedir = (selecao) => call('POST', '/api/pedidos', {
+    restaurante_id: rs.id, endereco: 'x', itens: [{ produto_id: c.id, quantidade: 1, selecao }],
+  }, cli);
+  assert.equal((await pedir({ [carne.id]: 0 })).status, 400);   // abaixo do mínimo
+  assert.equal((await pedir({ [carne.id]: 9 })).status, 400);   // acima do máximo
+  assert.equal((await pedir({ 999999: 1 })).status, 400);       // opção inexistente
+  const pontos = c.opcoes.filter((o) => o.grupo === 'Ponto da carne');
+  assert.equal((await pedir({ [pontos[0].id]: 1, [pontos[1].id]: 1 })).status, 400); // duas escolhas no mesmo grupo
+});
+
+test('pedido abaixo do mínimo é rejeitado', async () => {
+  const cli = await login('cliente@demo.com');
+  const rs = (await call('GET', '/api/restaurantes')).data.find((r) => r.nome === 'Burger House');
+  const refri = (await call('GET', `/api/restaurantes/${rs.id}/produtos`)).data.find((p) => p.nome.startsWith('Refrigerante'));
+  const r = await call('POST', '/api/pedidos', { restaurante_id: rs.id, endereco: 'x', itens: [{ produto_id: refri.id, quantidade: 1 }] }, cli);
+  assert.equal(r.status, 400);
+  assert.match(r.data.erro, /mínimo/);
 });

@@ -21,7 +21,7 @@
 
 ## Laudo de Qualidade
 ### Evidências automatizadas (já executadas)
-Saída de `npm test` (`backend`): **7 testes, 7 aprovados, 0 falhas**.
+Saída de `npm test` (`backend`): **10 testes, 10 aprovados, 0 falhas**.
 
 ### Erros encontrados e correções
 Preencha após os testes dos colegas (anexe prints).

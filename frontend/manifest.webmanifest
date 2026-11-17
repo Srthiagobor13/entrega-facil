@@ -1,15 +1,23 @@
 {
-  "name": "EntregaFácil",
-  "short_name": "EntregaFácil",
-  "description": "App de entrega de comida com perfis de cliente, restaurante e entregador",
+  "id": "/",
+  "name": "Entrega Fácil",
+  "short_name": "Entrega Fácil",
+  "description": "Cardápio digital e pedidos online de hambúrgueres artesanais",
   "lang": "pt-BR",
-  "start_url": "/",
+  "dir": "ltr",
+  "start_url": "/?origem=pwa",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#faf6f2",
-  "theme_color": "#e8451e",
+  "orientation": "portrait",
+  "background_color": "#0f0e0d",
+  "theme_color": "#0f0e0d",
+  "categories": ["food", "shopping"],
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Meus pedidos", "url": "/?atalho=pedidos", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
   ]
 }

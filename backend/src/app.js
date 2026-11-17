@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { calcularItem } from './pricing.js';
 
 const SECRET = process.env.JWT_SECRET || 'dev-secret-trocar-em-producao';
 const PAPEIS = ['cliente', 'restaurante', 'entregador'];
@@ -70,26 +71,37 @@ export function createApp(db) {
 
   // ---------- Restaurantes e cardápio ----------
   app.get('/api/restaurantes', (_req, res) => {
-    res.json(db.prepare('SELECT id, nome, categoria FROM restaurantes ORDER BY nome').all());
-  });
-
-  app.get('/api/restaurantes/:id/produtos', (req, res) => {
     res.json(
       db
-        .prepare('SELECT id, nome, descricao, preco FROM produtos WHERE restaurante_id = ? AND ativo = 1 ORDER BY nome')
-        .all(Number(req.params.id)),
+        .prepare(
+          `SELECT id, nome, categoria, descricao, imagem, taxa_entrega, pedido_minimo, tempo_min, tempo_max
+           FROM restaurantes ORDER BY CASE WHEN nome = 'Burger House' THEN 0 ELSE 1 END, nome`,
+        )
+        .all(),
     );
   });
 
+  app.get('/api/restaurantes/:id/produtos', (req, res) => {
+    const produtos = db
+      .prepare(
+        `SELECT id, categoria, nome, descricao, preco, imagem, destaque FROM produtos
+         WHERE restaurante_id = ? AND ativo = 1 ORDER BY id`,
+      )
+      .all(Number(req.params.id));
+    const ops = db.prepare('SELECT id, grupo, tipo, nome, preco, base, min, max FROM opcoes WHERE produto_id = ? ORDER BY id');
+    res.json(produtos.map((p) => ({ ...p, opcoes: ops.all(p.id) })));
+  });
+
   app.post('/api/produtos', auth('restaurante'), (req, res) => {
-    const { nome, descricao, preco } = req.body || {};
+    const { nome, descricao, preco, categoria } = req.body || {};
     const p = Number(preco);
     if (!nome || !Number.isFinite(p) || p < 0) return erro(res, 400, 'Nome e preço válidos são obrigatórios');
     const restId = restauranteDoUsuario(req.user.id);
+    const cat = String(categoria || 'Outros').trim() || 'Outros';
     const r = db
-      .prepare('INSERT INTO produtos (restaurante_id,nome,descricao,preco) VALUES (?,?,?,?)')
-      .run(restId, nome, descricao || '', p);
-    res.status(201).json({ id: Number(r.lastInsertRowid), nome, descricao: descricao || '', preco: p });
+      .prepare('INSERT INTO produtos (restaurante_id,categoria,nome,descricao,preco) VALUES (?,?,?,?,?)')
+      .run(restId, cat, nome, descricao || '', p);
+    res.status(201).json({ id: Number(r.lastInsertRowid), categoria: cat, nome, descricao: descricao || '', preco: p, opcoes: [] });
   });
 
   app.delete('/api/produtos/:id', auth('restaurante'), (req, res) => {
@@ -103,36 +115,49 @@ export function createApp(db) {
 
   // ---------- Pedidos ----------
   app.post('/api/pedidos', auth('cliente'), (req, res) => {
-    const { restaurante_id, itens, endereco } = req.body || {};
+    const { restaurante_id, itens, endereco, pagamento, troco_para } = req.body || {};
     if (!endereco || !String(endereco).trim()) return erro(res, 400, 'Informe o endereço de entrega');
     if (!Array.isArray(itens) || !itens.length) return erro(res, 400, 'Carrinho vazio');
-    if (!db.prepare('SELECT 1 FROM restaurantes WHERE id = ?').get(Number(restaurante_id)))
-      return erro(res, 404, 'Restaurante não encontrado');
+    const pag = pagamento || 'pix';
+    if (!['pix', 'cartao', 'dinheiro'].includes(pag)) return erro(res, 400, 'Forma de pagamento inválida');
+    const rest = db.prepare('SELECT * FROM restaurantes WHERE id = ?').get(Number(restaurante_id));
+    if (!rest) return erro(res, 404, 'Restaurante não encontrado');
 
-    let total = 0;
+    let subtotal = 0;
     const linhas = [];
     for (const it of itens) {
       const qtd = Number(it.quantidade);
       const prod = db
         .prepare('SELECT * FROM produtos WHERE id = ? AND restaurante_id = ? AND ativo = 1')
-        .get(Number(it.produto_id), Number(restaurante_id));
+        .get(Number(it.produto_id), rest.id);
       if (!prod || !Number.isInteger(qtd) || qtd < 1 || qtd > 50) return erro(res, 400, 'Item inválido no carrinho');
-      total += prod.preco * qtd;
-      linhas.push({ prod, qtd });
+      const ops = db.prepare('SELECT * FROM opcoes WHERE produto_id = ?').all(prod.id);
+      let calc;
+      try {
+        calc = calcularItem(ops, prod.preco, it.selecao);
+      } catch (e) {
+        return erro(res, 400, e.message);
+      }
+      subtotal += calc.unit * qtd;
+      linhas.push({ prod, qtd, calc, obs: String(it.observacao || '').slice(0, 200) });
     }
-    total = Math.round(total * 100) / 100;
+    subtotal = Math.round(subtotal * 100) / 100;
+    if (subtotal < rest.pedido_minimo) return erro(res, 400, `Pedido mínimo de R$ ${rest.pedido_minimo.toFixed(2).replace('.', ',')}`);
+    const taxa = rest.taxa_entrega;
+    const total = Math.round((subtotal + taxa) * 100) / 100;
+    const troco = pag === 'dinheiro' && Number(troco_para) > total ? Number(troco_para) : null;
 
     db.exec('BEGIN');
     try {
       const pid = Number(
         db
-          .prepare('INSERT INTO pedidos (cliente_id,restaurante_id,endereco,total) VALUES (?,?,?,?)')
-          .run(req.user.id, Number(restaurante_id), String(endereco).trim(), total).lastInsertRowid,
+          .prepare('INSERT INTO pedidos (cliente_id,restaurante_id,endereco,subtotal,taxa,total,pagamento,troco_para) VALUES (?,?,?,?,?,?,?,?)')
+          .run(req.user.id, rest.id, String(endereco).trim(), subtotal, taxa, total, pag, troco).lastInsertRowid,
       );
-      const ins = db.prepare('INSERT INTO itens_pedido (pedido_id,produto_id,nome,preco,quantidade) VALUES (?,?,?,?,?)');
-      for (const { prod, qtd } of linhas) ins.run(pid, prod.id, prod.nome, prod.preco, qtd);
+      const ins = db.prepare('INSERT INTO itens_pedido (pedido_id,produto_id,nome,preco,quantidade,detalhes,observacao) VALUES (?,?,?,?,?,?,?)');
+      for (const { prod, qtd, calc, obs } of linhas) ins.run(pid, prod.id, prod.nome, calc.unit, qtd, JSON.stringify(calc.detalhes), obs);
       db.exec('COMMIT');
-      res.status(201).json({ id: pid, total, status: 'recebido' });
+      res.status(201).json({ id: pid, subtotal, taxa, total, status: 'recebido' });
     } catch (e) {
       db.exec('ROLLBACK');
       throw e;
@@ -156,8 +181,13 @@ export function createApp(db) {
          WHERE ${where} ORDER BY p.id DESC LIMIT 100`,
       )
       .all(...params);
-    const itensStmt = db.prepare('SELECT nome, preco, quantidade FROM itens_pedido WHERE pedido_id = ?');
-    res.json(pedidos.map((p) => ({ ...p, itens: itensStmt.all(p.id) })));
+    const itensStmt = db.prepare('SELECT nome, preco, quantidade, detalhes, observacao FROM itens_pedido WHERE pedido_id = ?');
+    res.json(
+      pedidos.map((p) => ({
+        ...p,
+        itens: itensStmt.all(p.id).map((i) => ({ ...i, detalhes: JSON.parse(i.detalhes) })),
+      })),
+    );
   });
 
   app.patch('/api/pedidos/:id/status', auth(), (req, res) => {

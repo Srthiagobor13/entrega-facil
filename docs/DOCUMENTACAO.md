@@ -108,7 +108,7 @@ Navegador (PWA) → API REST Express → SQLite. O mesmo servidor Express entreg
 - Aceite de entrega com `UPDATE ... WHERE status='pronto'`, o que evita dois entregadores no mesmo pedido.
 
 ## 8. Testes
-Automatizados (`npm test`, 7 testes): login inválido, cadastro duplicado, listagens públicas, fluxo completo pedido→entrega, bloqueio entre restaurantes, validações de pedido e permissões do cardápio.
+Automatizados (`npm test`, 10 testes): personalização de itens (carne extra, adicionais, remoções), pedido mínimo, login inválido, cadastro duplicado, listagens públicas, fluxo completo pedido→entrega, bloqueio entre restaurantes, validações de pedido e permissões do cardápio.
 
 Testes com usuários: tabela de 5 colegas no arquivo `docs/TESTES_E_LAUDO.md`.
 

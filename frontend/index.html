@@ -2,22 +2,32 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EntregaFácil</title>
-  <meta name="theme-color" content="#e8451e">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Entrega Fácil | Cardápio e pedidos online</title>
+  <meta name="description" content="Peça hambúrgueres artesanais online. Monte o seu do jeito que quiser e receba em casa.">
+  <meta name="theme-color" content="#0f0e0d">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Entrega Fácil">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header id="topo">
-    <h1>🍔 EntregaFácil</h1>
-    <div id="usuario"></div>
-  </header>
-  <nav id="abas"></nav>
-  <main id="app" aria-live="polite"></main>
-  <div id="aviso" role="status"></div>
+  <header id="topo"></header>
+  <main id="app"></main>
+  <footer id="rodape">
+    <span class="marca-mini">Entrega Fácil</span>
+    <span>Projeto acadêmico PIT. Pagamento simulado, nenhuma cobrança é realizada.</span>
+  </footer>
+  <div id="overlay" hidden></div>
+  <div id="aviso" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
 </body>
 </html>
