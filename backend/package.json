@@ -1,0 +1,17 @@
+{
+  "name": "entrega-facil-backend",
+  "version": "1.0.0",
+  "description": "API do app de entrega de comida EntregaFácil (PIT)",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/"
+  },
+  "engines": { "node": ">=22.5" },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
